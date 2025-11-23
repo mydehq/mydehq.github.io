@@ -63,7 +63,7 @@ We welcome contributions to improve the MyDE documentation! Here's how you can h
 - **Main Repository**: [mydehq/MyDE](https://github.com/mydehq/MyDE)
 - **Control CLI**: [mydehq/MyCTL](https://github.com/mydehq/MyCTL)
 - **Official Website**: [myde.soymadip.me](http://myde.soymadip.me)
-- **Keybindings Reference**: [MyDE Keybinds](https://soymadip.github.io/MyDE/keybinds/)
+- **Keybinds Reference**: [MyDE Keybinds](https://soymadip.github.io/MyDE/keybinds/)
 - **KireiSakura-Kit**: [Dependency Library](https://soymadip.github.io/KireiSakura-Kit)
 
 ## 📝 License
