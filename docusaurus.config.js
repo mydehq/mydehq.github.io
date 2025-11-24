@@ -16,7 +16,7 @@ const projectTagLine =
   "A beautiful, customized Linux Desktop Environment that just works";
 
 const iconPic =
-  "https://raw.githubusercontent.com/myhq/MyDE/refs/heads/main/src/img/icon.png";
+  "https://raw.githubusercontent.com/mydehq/MyDE/refs/heads/main/src/img/icon.png";
 
 const siteUrl = "https://myde.soymadip.me";
 const sitePath = "/";
