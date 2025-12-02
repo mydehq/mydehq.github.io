@@ -4,10 +4,10 @@ description: Getting started with MyDE
 hide_title: true
 ---
 
-import useBaseUrl from "@docusaurus/useBaseUrl";
+import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 
 <div style={{ textAlign: "center" }}>
-  <img src={useBaseUrl("/img/icon.png")} alt="MyDE Logo" width="120" />
+  <img src={useDocusaurusContext().siteConfig.customFields.projectIcon} alt="MyDE Logo" width="120" />
   <h1 className="myde-title">Welcome to the MyDE Documentation</h1>
 </div>
 
