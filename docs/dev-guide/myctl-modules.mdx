@@ -12,7 +12,7 @@ The `myctl` script is a powerful, modular controller for MyDE. This guide explai
 
 - **`myctl`**: The main executable script. Its primary role is to parse the top-level commands (like `get`, `set`, `show`) and delegate to the appropriate library script.
 - **`~/.local/lib/myctl/`**: The directory containing all the logic.
-  - **`_utils.sh`**: Contains essential helper functions (`import_lib`, `help_menu`, `log.*`, etc.).
+  - **`_utils.sh`**: Contains essential helper functions (`import-lib`, `help-menu`, `log.*`, etc.).
   - **`logger.sh`**: A powerful logger for consistent, colored, and level-based output.
   - **`*.sh`**: Individual files that implement specific features (e.g., `gtk-utils.sh`, `power-menu.sh`).
 
@@ -22,7 +22,7 @@ The `myctl` script is a powerful, modular controller for MyDE. This guide explai
 2.  The main `myctl` script uses a `case` statement to identify the top-level `<command>`.
 3.  It then uses `shift` to remove the first argument, so the subcommand becomes the new `$1`.
 4.  A nested `case` statement handles the `<subcommand>`.
-5.  The `import_lib "script.sh"` function is called to `source` the necessary script file from the library.
+5.  The `import-lib "script.sh"` function is called to `source` the necessary script file from the library.
 6.  The function from the library is then called, processing any remaining arguments.
 
 ---
@@ -61,8 +61,8 @@ Always include a comment block explaining your function's purpose and arguments.
 Now, edit the main `myctl` script to add the `hello` command.
 
 1.  **Add the main `case` entry:** Find the main `case "$1" in` block and add an entry for `hello`.
-2.  **Define the `help` subcommand:** Inside the `help` block, create a `case` for its own arguments. The first thing should always be the `help` option, which defines the `cmd_map` array for the `help_menu`.
-3.  **Implement the command logic:** Add a case that calls your new function. Use `import_lib` to load your script first.
+2.  **Define the `help` subcommand:** Inside the `help` block, create a `case` for its own arguments. The first thing should always be the `help` option, which defines the `cmd_map` array for the `help-menu`.
+3.  **Implement the command logic:** Add a case that calls your new function. Use `import-lib` to load your script first.
 4.  **Handle invalid subcommands:** Add a default case to show the help menu if an invalid subcommand is used.
 
 Here is the full code block to add to `myctl`:
@@ -78,14 +78,14 @@ Here is the full code block to add to `myctl`:
                     [world]="Greet the world."
                     [user]="Greet the current user."
                 )
-                help_menu
+                help-menu
                 ;;
             world)
-                import_lib "hello.sh"
+                import-lib "hello.sh"
                 hello "World"
                 ;;
             user)
-                import_lib "hello.sh"
+                import-lib "hello.sh"
                 hello "$USER"
                 ;;
             ""|*)
