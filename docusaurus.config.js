@@ -9,8 +9,8 @@ import { useEnabled } from "./src/utils/filterEnabledItems.js";
 //========================= Config Vars =========================//
 
 const projectName = "MyDE";
-const projectRepo = "https://github.com/mydehq/MyDE";
-const wikiRepo = "https://github.com/mydehq/MyWiki";
+const projectRepo = "https://github.com/mydehq/myde";
+const wikiRepo = "https://github.com/mydehq/mydehq.github.io";
 
 const projectTagLine =
   "A beautiful, customized Linux Desktop Environment that just works";
@@ -18,7 +18,7 @@ const projectTagLine =
 const iconPic =
   "https://raw.githubusercontent.com/mydehq/MyDE/refs/heads/main/src/img/icon.png";
 
-const siteUrl = "https://myde.soymadip.me";
+const siteUrl = "https://mydehq.github.io";
 const sitePath = "/";
 
 //========================= Docusaurus Config =========================//
