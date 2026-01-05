@@ -1,6 +1,8 @@
 <div align="center">
+    <img src="./static/img/mywiki.svg" alt="MyWiki Logo" width="80">
     <h1>MyDE Wiki</h1>
-    <p><b>Official documentation for MyDE - A beautiful, customized Linux DE</b></p>
+    <p><b>Official documentation for MyDE</b></p>
+    <p>This repository contains wiki website of MyDE & it's various tools.</p>
 </div>
 
 ---
