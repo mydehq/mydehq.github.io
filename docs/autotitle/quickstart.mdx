@@ -1,0 +1,58 @@
+---
+title: Quick Start
+description: Get started with autotitle in minutes
+sidebar_position: 3
+---
+
+# Quick Start
+
+## Basic Usage
+
+```bash
+# Navigate to your anime directory
+cd /path/to/videos
+
+# Initialize configuration (creates template to edit)
+autotitle init .
+
+# Or initialize with URLs directly
+autotitle init . -u "https://myanimelist.net/anime/XXXXX" -F "https://animefillerlist.com/shows/series"
+
+# Preview changes (dry-run)
+autotitle --dry-run .
+
+# Perform rename
+autotitle .
+```
+
+## Configuration File
+
+Running `autotitle init` creates `_autotitle.yml`:
+
+```yaml
+targets:
+  - path: "."
+    url: "https://myanimelist.net/anime/XXXXX/Series_Name"
+    filler_url: "https://www.animefillerlist.com/shows/series-name"
+    patterns:
+      - input:
+          - "Episode {{EP_NUM}} {{RES}}"
+        output:
+          fields: [SERIES, EP_NUM, FILLER, EP_NAME]
+          separator: " - "
+```
+
+## Getting URLs
+
+1. **MAL URL**: Visit [MyAnimeList](https://myanimelist.net/), find your series, copy the URL
+2. **Filler URL** (optional): Visit [AnimeFillerList](https://www.animefillerlist.com/), find the series, copy URL
+
+## Undo Changes
+
+```bash
+# Restore from backup
+autotitle undo .
+
+# Clean backup files
+autotitle clean .
+```

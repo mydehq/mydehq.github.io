@@ -1,0 +1,103 @@
+---
+title: CLI Reference
+description: All autotitle commands and flags
+sidebar_position: 5
+---
+
+# CLI Reference
+
+## Main Commands
+
+| Command                 | Description                    |
+| ----------------------- | ------------------------------ |
+| `autotitle <path>`      | Rename files in directory      |
+| `autotitle init [path]` | Create `_autotitle.yml` config |
+| `autotitle undo <path>` | Restore from backup            |
+| `autotitle clean [path]`| Remove backup directory        |
+| `autotitle version`     | Print version number           |
+
+## Database Commands
+
+| Command                           | Description                    |
+| --------------------------------- | ------------------------------ |
+| `autotitle db gen <url>`          | Generate episode database      |
+| `autotitle db path`               | Show database directory        |
+| `autotitle db list`               | List all cached databases      |
+| `autotitle db info <provider> <id>` | Show database info           |
+| `autotitle db rm <provider> <id>` | Remove specific database       |
+
+## Flags by Command
+
+### `autotitle <path>` (rename)
+
+| Flag          | Short | Description                      |
+| ------------- | ----- | -------------------------------- |
+| `--dry-run`   | `-d`  | Preview changes without applying |
+| `--offset`    | `-o`  | Episode number offset            |
+| `--no-backup` | `-n`  | Skip backup creation             |
+| `--verbose`   | `-v`  | Verbose output                   |
+| `--quiet`     | `-q`  | Suppress output except errors    |
+
+### `autotitle init [path]`
+
+| Flag          | Short | Description                        |
+| ------------- | ----- | ---------------------------------- |
+| `--url`       | `-u`  | Provider URL (MAL, TMDB, etc)      |
+| `--filler`    | `-F`  | Filler list URL                    |
+| `--offset`    | `-o`  | Set default offset in config       |
+| `--padding`   | `-p`  | Set episode padding (e.g. 2, 3)    |
+| `--separator` | `-S`  | Set field separator                |
+| `--force`     | `-f`  | Overwrite existing config          |
+
+### `autotitle db gen <url>`
+
+| Flag       | Short | Description               |
+| ---------- | ----- | ------------------------- |
+| `--filler` | `-F`  | Filler list URL           |
+| `--force`  | `-f`  | Overwrite existing database |
+
+### `autotitle db list`
+
+| Flag         | Short | Description                          |
+| ------------ | ----- | ------------------------------------ |
+| `--provider` | `-p`  | Filter by provider (mal, tmdb, etc)  |
+
+### `autotitle db rm`
+
+| Flag    | Short | Description           |
+| ------- | ----- | --------------------- |
+| `--all` | `-a`  | Remove all databases  |
+
+### `autotitle clean [path]`
+
+| Flag       | Short | Description                  |
+| ---------- | ----- | ---------------------------- |
+| `--global` | `-g`  | Remove all backups globally  |
+
+## Examples
+
+```bash
+# Initialize with URLs
+autotitle init . -u "https://myanimelist.net/anime/16498" -F "https://animefillerlist.com/shows/attack-titan"
+
+# Preview rename
+autotitle --dry-run /path/to/anime
+
+# Rename without backup
+autotitle -n /path/to/anime
+
+# Generate database with filler data
+autotitle db gen "https://myanimelist.net/anime/12345" -F "https://animefillerlist.com/shows/series"
+
+# List databases filtered by provider
+autotitle db list -p mal
+
+# Show database info
+autotitle db info mal 12345
+
+# Remove all databases
+autotitle db rm -a
+
+# Remove all backups globally
+autotitle clean -g
+```

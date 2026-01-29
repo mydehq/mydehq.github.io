@@ -25,6 +25,22 @@ const sidebar = {
       type: "category",
       items: ["dev-guide/myctl-modules"],
     },
+    {
+      label: "Autotitle",
+      type: "category",
+      link: {
+        type: "doc",
+        id: "autotitle/index",
+      },
+      items: [
+        "autotitle/install",
+        "autotitle/quickstart",
+        "autotitle/configuration",
+        "autotitle/cli-reference",
+        "autotitle/providers",
+        "autotitle/library",
+      ]
+    },
     "contributing",
     "faq",
   ],

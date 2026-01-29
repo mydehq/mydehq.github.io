@@ -1,0 +1,104 @@
+---
+title: Configuration
+description: Configure autotitle patterns and output format
+sidebar_position: 4
+---
+
+# Configuration
+
+## Map File Structure
+
+```yaml
+targets:
+  - path: "." # Directory to process
+    url: "https://..." # Provider URL (MAL, TMDB, etc.)
+    filler_url: "https://..." # Optional filler source URL
+    patterns:
+      - input:
+          - "Pattern 1"
+          - "Pattern 2"
+        output:
+          fields: [FIELD1, FIELD2, ...]
+          separator: " - " # Optional, defaults to " - "
+```
+
+## Input Patterns
+
+Use `{{PLACEHOLDER}}` syntax to match parts of filenames:
+
+| Placeholder  | Matches            | Example           |
+| ------------ | ------------------ | ----------------- |
+| `{{EP_NUM}}` | Episode number     | `01`, `123`       |
+| `{{RES}}`    | Resolution         | `1080p`, `720p`   |
+| `{{SERIES}}` | Any text           | `Attack on Titan` |
+| `{{ANY}}`    | Anything (ignored) | `[SubGroup]`      |
+
+**Example patterns:**
+
+```yaml
+input:
+  - "{{SERIES}} - {{EP_NUM}} ({{RES}})"
+  - "[SubGroup] {{SERIES}} - {{EP_NUM}}"
+  - "Episode {{EP_NUM}} {{RES}}"
+```
+
+## Output Configuration
+
+| Field       | Description             | Example                 |
+| ----------- | ----------------------- | ----------------------- |
+| `SERIES`    | Series title (default)  | `Attack on Titan`       |
+| `SERIES_EN` | English title           | `Attack on Titan`       |
+| `SERIES_JP` | Japanese title          | `進撃の巨人`            |
+| `EP_NUM`    | Episode number (padded) | `01`                    |
+| `EP_NAME`   | Episode title           | `To You, in 2000 Years` |
+| `FILLER`    | Filler marker           | `[F]` or empty          |
+| `RES`       | Resolution (from input) | `1080p`                 |
+
+### Implicit Literals
+You can include literal strings directly in the `fields` list.
+*   **Keywords** (like `SERIES`) are replaced with data.
+*   **Quoted Strings** (like `" - "`) are used as-is.
+*   **Unknown Strings** (like `S2` or ` - `) are treated as literals automatically.
+
+```yaml
+fields: ["S2", EP_NUM, " - ", EP_NAME]
+# Result: "S201 - Episode Title.mkv"
+```
+
+### Glue Operator (`+`)
+Use the `+` operator to join two fields without the default separator.
+
+```yaml
+fields: [SERIES, "+", EP_NUM]
+# Result: "SeriesName01.mkv" (No separator between Series and EpNum)
+```
+
+## Advanced Settings
+
+### Episode Offset
+Maps local episode numbers to database numbers (e.g., matching "Episode 1" of local Season 2 to "Episode 13" in the global DB list).
+
+```yaml
+output:
+  offset: 12 # Local Ep 1 -> DB Ep 13
+```
+
+### Episode Padding
+Controls the number of digits for `EP_NUM`.
+*   **0 (Default)**: Automatically calculated based on total episodes (e.g., 24 eps -> 2 digits `01`, 150 eps -> 3 digits `001`).
+*   **Explicit**: Force a specific width.
+
+```yaml
+output:
+  padding: 3 # Force 3 digits (001)
+```
+
+### Separator
+Sets the default separator inserted between fields.
+*   Default: ` - `
+*   Empty: `""` (Use this if you want full manual control via literals)
+
+```yaml
+output:
+  separator: "  " # Double space
+```

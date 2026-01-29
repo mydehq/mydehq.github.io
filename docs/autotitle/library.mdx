@@ -1,0 +1,300 @@
+---
+title: Go Library
+description: Using autotitle as a Go package
+sidebar_position: 6
+---
+
+# Go Library
+
+Autotitle can be used as a Go package for programmatic access to episode renaming functionality.
+
+## Installation
+
+```bash
+go get github.com/mydehq/autotitle
+```
+
+## Core Functions
+
+### Rename
+
+Renames media files in a directory based on the map file configuration.
+
+```go
+func Rename(ctx context.Context, path string, opts ...Option) ([]RenameOperation, error)
+```
+
+**Example:**
+
+```go
+import (
+    "context"
+    "fmt"
+    "github.com/mydehq/autotitle"
+)
+
+func main() {
+    ctx := context.Background()
+    
+    // Basic rename
+    ops, err := autotitle.Rename(ctx, "/path/to/videos")
+    if err != nil {
+        fmt.Printf("Error: %v\n", err)
+        return
+    }
+    
+    for _, op := range ops {
+        fmt.Printf("Renamed: %s -> %s\n", op.OldName, op.NewName)
+    }
+}
+```
+
+**With Options:**
+
+```go
+// Dry-run mode (preview without renaming)
+ops, err := autotitle.Rename(ctx, path, autotitle.WithDryRun())
+
+// Skip backup creation
+ops, err := autotitle.Rename(ctx, path, autotitle.WithNoBackup())
+
+// Custom event handler for progress
+handler := func(event autotitle.Event) {
+    fmt.Printf("[%s] %s\n", event.Type, event.Message)
+}
+ops, err := autotitle.Rename(ctx, path, autotitle.WithEvents(handler))
+
+// Combine options
+ops, err := autotitle.Rename(ctx, path, 
+    autotitle.WithDryRun(),
+    autotitle.WithEvents(handler),
+)
+```
+
+### Init
+
+Creates a new `_autotitle.yml` map file in the specified directory.
+
+```go
+func Init(ctx context.Context, path string, opts ...Option) error
+```
+
+**Example:**
+
+```go
+ctx := context.Background()
+
+// Initialize with MAL and filler URLs
+err := autotitle.Init(ctx, "/path/to/videos",
+    autotitle.WithURL("https://myanimelist.net/anime/16498/Attack_on_Titan"),
+    autotitle.WithFiller("https://www.animefillerlist.com/shows/attack-titan"),
+    autotitle.WithSeparator(" - "), // Optional
+    autotitle.WithOffset(0),       // Optional
+    autotitle.WithPadding(0),      // Optional
+    autotitle.WithForce(),         // Optional
+)
+```
+
+### DBGen
+
+Generates/updates the episode database from a provider URL.
+
+```go
+func DBGen(ctx context.Context, url, fillerURL string, force bool) (bool, error)
+```
+
+**Example:**
+
+```go
+ctx := context.Background()
+
+// Generate database (returns true if updated)
+updated, err := autotitle.DBGen(ctx,
+    "https://myanimelist.net/anime/16498/Attack_on_Titan",
+    "https://www.animefillerlist.com/shows/attack-titan",
+    false, // force regenerate
+)
+
+if updated {
+    fmt.Println("Database updated with new episodes")
+}
+```
+
+### Undo
+
+Restores files from the backup directory.
+
+```go
+func Undo(ctx context.Context, path string) error
+```
+
+**Example:**
+
+```go
+err := autotitle.Undo(ctx, "/path/to/videos")
+```
+
+### Clean / CleanAll
+
+Removes backup directories.
+
+```go
+func Clean(ctx context.Context, path string) error    // Single directory
+func CleanAll(ctx context.Context) error              // All backups globally
+```
+
+### Version
+
+Returns the autotitle version string.
+
+```go
+func Version() string
+```
+
+## Types
+
+### RenameOperation
+
+Result of a rename operation.
+
+```go
+type RenameOperation struct {
+    SourcePath string          // Original file path
+    TargetPath string          // New file path
+    Episode    *Episode        // Episode data (if matched)
+    Status     OperationStatus // pending, success, skipped, failed
+    Error      string          // Error message (if failed)
+}
+```
+
+### Event
+
+Progress event emitted during operations.
+
+```go
+type Event struct {
+    Type    EventType  // info, progress, success, warning, error
+    Message string
+    Data    any        // Optional additional data
+}
+```
+
+### Media & Episode
+
+Episode metadata from the database.
+
+```go
+type Media struct {
+    ID           string
+    Provider     string
+    Title        string
+    TitleEN      string    // English title
+    TitleJP      string    // Japanese title
+    Episodes     []Episode
+    FillerSource string    // Filler source name (if used)
+}
+
+type Episode struct {
+    Number   int
+    Title    string
+    IsFiller bool
+    IsMixed  bool   // Mixed canon/filler
+    AirDate  string
+}
+```
+
+## Options
+
+| Option | Description |
+|--------|-------------|
+| `WithDryRun()` | Preview changes without renaming files |
+| `WithNoBackup()` | Skip backup creation before renaming |
+| `WithEvents(handler)` | Receive progress events during operation |
+
+## Provider Utilities
+
+```go
+// Get provider for a URL
+provider := autotitle.GetProviderForURL("https://myanimelist.net/anime/...")
+
+// Get filler source for a URL  
+source := autotitle.GetFillerSourceForURL("https://www.animefillerlist.com/...")
+
+// List available providers
+providers := autotitle.ListProviders()
+
+// List available filler sources
+sources := autotitle.ListFillerSources()
+```
+
+## Pattern Utilities
+
+```go
+// Compile a pattern for matching
+pattern, err := autotitle.CompilePattern("{{SERIES}} - {{EP_NUM}}")
+
+// Auto-detect pattern from filename
+pattern := autotitle.GuessPattern("Attack on Titan - 01.mkv")
+
+// Generate filename from fields
+filename := autotitle.GenerateFilenameFromFields(
+    []string{"SERIES", "EP_NUM", "EP_NAME"},
+    " - ",
+    vars,
+)
+```
+
+## Complete Example
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "github.com/mydehq/autotitle"
+)
+
+func main() {
+    ctx := context.Background()
+    path := "/path/to/anime/videos"
+    
+    // 1. Initialize map file
+    err := autotitle.Init(ctx, path,
+        autotitle.WithURL("https://myanimelist.net/anime/16498/Attack_on_Titan"),
+        autotitle.WithFiller("https://www.animefillerlist.com/shows/attack-titan"),
+        autotitle.WithForce(),
+    )
+    if err != nil {
+        fmt.Printf("Init error: %v\n", err)
+        return
+    }
+    
+    // 2. Preview changes
+    handler := func(e autotitle.Event) {
+        fmt.Printf("[%s] %s\n", e.Type, e.Message)
+    }
+    
+    ops, err := autotitle.Rename(ctx, path,
+        autotitle.WithDryRun(),
+        autotitle.WithEvents(handler),
+    )
+    if err != nil {
+        fmt.Printf("Error: %v\n", err)
+        return
+    }
+    
+    fmt.Printf("\nWill rename %d files\n", len(ops))
+    
+    // 3. Perform actual rename
+    ops, err = autotitle.Rename(ctx, path)
+    if err != nil {
+        fmt.Printf("Rename error: %v\n", err)
+        // Restore on error
+        autotitle.Undo(ctx, path)
+        return
+    }
+    
+    fmt.Printf("Successfully renamed %d files\n", len(ops))
+}
+```

@@ -1,0 +1,97 @@
+---
+title: Provider System
+description: Understanding and extending autotitle providers
+sidebar_position: 7
+---
+
+# Provider System
+
+Autotitle uses a **provider system** that makes it easy to add new data sources.
+
+## Architecture
+
+```
+Provider (data source)     →  Media data (titles, episodes)
+Filler Source (optional)   →  Filler episode numbers
+```
+
+These are **decoupled** - you can mix any provider with any filler source.
+
+## Built-in Providers
+
+| Provider | URL Pattern                 | Type  |
+| -------- | --------------------------- | ----- |
+| MAL      | `myanimelist.net/anime/...` | Anime |
+
+**Planned:**
+
+- TMDB (`themoviedb.org`) - Movies/TV
+- TVDB (`thetvdb.com`) - TV Shows
+- AniList (`anilist.co`) - Anime
+
+## Built-in Filler Sources
+
+| Source          | URL Pattern                     |
+| --------------- | ------------------------------- |
+| AnimeFillerList | `animefillerlist.com/shows/...` |
+
+## Adding a New Provider
+
+Create `internal/provider/tmdb.go`:
+
+```go
+package provider
+
+type TMDBProvider struct{}
+
+var tmdbURLPatterns = []string{"themoviedb.org/movie/", "themoviedb.org/tv/"}
+
+func (p *TMDBProvider) Name() string { return "tmdb" }
+func (p *TMDBProvider) MatchesURL(url string) bool { ... }
+func (p *TMDBProvider) ExtractID(url string) (string, error) { ... }
+func (p *TMDBProvider) FetchMedia(ctx context.Context, id string) (*types.Media, error) { ... }
+```
+
+Register in `registry.go`:
+
+```go
+var providers = []types.Provider{
+    &MALProvider{},
+    &TMDBProvider{},  // Add here
+}
+```
+
+## Adding a New Filler Source
+
+Create `internal/provider/filler/myfiller.go`:
+
+```go
+package filler
+
+type MyFillerSource struct{}
+
+func (s *MyFillerSource) Name() string { return "myfiller" }
+func (s *MyFillerSource) MatchesURL(url string) bool { ... }
+func (s *MyFillerSource) FetchFillers(ctx context.Context, slug string) ([]int, error) { ... }
+```
+
+Register in `filler/registry.go`:
+
+```go
+var fillerSources = []types.FillerSource{
+    &AnimeFillerListSource{},
+    &MyFillerSource{},  // Add here
+}
+```
+
+## Database Storage
+
+Databases are stored per-provider:
+
+```
+~/.cache/autotitle/db/
+├── mal/
+│   └── 12345@attack-on-titan.json
+├── tmdb/
+│   └── 1234@breaking-bad.json
+```
