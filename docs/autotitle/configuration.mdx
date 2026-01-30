@@ -30,8 +30,23 @@ Use `{{PLACEHOLDER}}` syntax to match parts of filenames:
 | ------------ | ------------------ | ----------------- |
 | `{{EP_NUM}}` | Episode number     | `01`, `123`       |
 | `{{RES}}`    | Resolution         | `1080p`, `720p`   |
-| `{{SERIES}}` | Any text           | `Attack on Titan` |
-| `{{ANY}}`    | Anything (ignored) | `[SubGroup]`      |
+| `{{SERIES}}` | Series title       | `Attack on Titan` |
+| `{{ANY}}`    | Metadata/Tags      | `[SubGroup]`, `v2`|
+
+### Smart Matching Logic
+
+Autotitle uses **non-greedy matching** for all text-based placeholders (`{{SERIES}}`, `{{ANY}}`, `{{EP_NAME}}`). This ensures that patterns like `[{{ANY}}] {{SERIES}} - {{EP_NUM}}` correctly isolate the bracketed tag without "swallowing" parts of the series name.
+
+### Multiple Placeholders
+You can use the same placeholder multiple times in a single pattern. This is especially useful for files with multiple metadata tags:
+
+```yaml
+# Pattern with multiple ANY placeholders
+input:
+  - "[{{ANY}}] [{{ANY}}] {{SERIES}} - {{EP_NUM}}"
+```
+
+Autotitle will internally disambiguate these (e.g., `Any_1`, `Any_2`) to ensure robust extraction.
 
 **Example patterns:**
 
@@ -66,7 +81,7 @@ fields: ["S2", EP_NUM, " - ", EP_NAME]
 ```
 
 ### Glue Operator (`+`)
-Use the `+` operator to join two fields without the default separator.
+Use the `+` operator to join two fields without separator.
 
 ```yaml
 fields: [SERIES, "+", EP_NUM]

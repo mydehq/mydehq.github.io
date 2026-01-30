@@ -44,7 +44,7 @@ func main() {
     }
     
     for _, op := range ops {
-        fmt.Printf("Renamed: %s -> %s\n", op.OldName, op.NewName)
+        fmt.Printf("Renamed: %s -> %s\n", op.SourcePath, op.TargetPath)
     }
 }
 ```
@@ -241,6 +241,7 @@ filename := autotitle.GenerateFilenameFromFields(
     []string{"SERIES", "EP_NUM", "EP_NAME"},
     " - ",
     vars,
+    3, // Padding width
 )
 ```
 
