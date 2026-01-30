@@ -100,7 +100,7 @@ err := autotitle.Init(ctx, "/path/to/videos",
 Generates/updates the episode database from a provider URL.
 
 ```go
-func DBGen(ctx context.Context, url, fillerURL string, force bool) (bool, error)
+func DBGen(ctx context.Context, url string, opts ...Option) (bool, error)
 ```
 
 **Example:**
@@ -111,8 +111,8 @@ ctx := context.Background()
 // Generate database (returns true if updated)
 updated, err := autotitle.DBGen(ctx,
     "https://myanimelist.net/anime/16498/Attack_on_Titan",
-    "https://www.animefillerlist.com/shows/attack-titan",
-    false, // force regenerate
+    autotitle.WithFiller("https://www.animefillerlist.com/shows/attack-titan"),
+    autotitle.WithForce(), // force regenerate
 )
 
 if updated {
