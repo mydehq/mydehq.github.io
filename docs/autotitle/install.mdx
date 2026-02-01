@@ -6,20 +6,68 @@ sidebar_position: 2
 
 # Installation
 
-## From my-repo (Arch Linux)
+
+## Linux
+
+### Arch Linux
+
+#### 1. `my-repo` Arch Repo
 
 ```bash
 curl -sL https://mydehq.github.io/my-repo/install | bash
 sudo pacman -S autotitle
 ```
 
-## From AUR
+#### 2. From AUR
 
 ```bash
 paru -S autotitle
 ```
 
+### Other Distros
+
+Directly download binary from Github:
+
+```bash
+sudo curl -L https://github.com/mydehq/autotitle/releases/latest/download/autotitle-linux-amd64 -o /usr/local/bin/autotitle
+sudo chmod +x /usr/local/bin/autotitle 
+```
+
+## MacOS
+
+Directly download from Releases:
+
+### Intel Chips
+
+```bash
+sudo curl -L https://github.com/mydehq/autotitle/releases/latest/download/autotitle-darwin-amd64 -o /usr/local/bin/autotitle
+sudo chmod +x /usr/local/bin/autotitle 
+```
+
+### M1 chips
+
+```bash
+sudo curl -L https://github.com/mydehq/autotitle/releases/latest/download/autotitle-darwin-arm64 -o /usr/local/bin/autotitle
+sudo chmod +x /usr/local/bin/autotitle 
+```
+
+## Windows
+
+### From Winget
+
+```bash
+winget install mydehq.autotitle
+```
+
+### Directly download binary
+
+```bash
+wget https://github.com/mydehq/autotitle/releases/latest/download/autotitle-windows-amd64.exe -O autotitle.exe
+```
+
 ## Build from Source
+
+Binaries can be made for linux, macos, windows:
 
 ```bash
 git clone https://github.com/mydehq/autotitle.git && cd autotitle
