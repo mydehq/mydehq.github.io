@@ -37,7 +37,7 @@ const sidebar = {
         "autotitle/quickstart",
         "autotitle/configuration",
         "autotitle/cli-reference",
-        "autotitle/providers",
+        "autotitle/add-sources",
         "autotitle/library",
       ]
     },

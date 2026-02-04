@@ -1,0 +1,170 @@
+---
+title: Adding Data Sources
+description: Understanding and extending autotitle providers
+sidebar_position: 7
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+# Adding New Data Sources
+
+## Providers
+
+Autotitle uses a **provider system** that makes it easy to add new data sources.  
+Each Provider must implement the `types.Provider` interface.
+
+### Built-in Providers
+
+<Tabs>
+<TabItem value="episode" label="Episode Providers" default>
+
+|            Provider            | Type  |         URL Pattern         |
+| :----------------------------: | ----- | :-------------------------: |
+| [MAL](https://myanimelist.net) | Anime | `myanimelist.net/anime/...` |
+
+**Planned:**
+
+- TMDB (`themoviedb.org`) - Movies/TV
+- TVDB (`thetvdb.com`) - TV Shows
+- AniList (`anilist.co`) - Anime
+
+</TabItem>
+<TabItem value="filler" label="Filler Sources">
+
+|                     Source                     | Type  |           URL Pattern           |
+| :--------------------------------------------: | ----- | :-----------------------------: |
+| [AnimeFillerList](https://animefillerlist.com) | Anime | `animefillerlist.com/shows/...` |
+
+</TabItem>
+</Tabs>
+
+## Architecture
+
+Each provider is a separate module that can be used independently of other providers.
+They all have common parent, the `types.Provider` interface.
+
+There are 2 types of providers:
+
+### Episode Provider
+
+Provides Media Episode data (titles, episode numbers, alt names).
+
+### Filler Provider
+
+Provides Filler episode numbers.
+
+## Adding a New Provider
+
+To add a new media source (like TMDB or AniList), follow these steps:
+
+### 1. Implement the Interface
+
+Create a new file in `internal/provider/` (e.g., `myprovider.go`). It must satisfy the `Provider` interface:
+
+```go
+package provider
+
+import (
+    "context"
+    "github.com/mydehq/autotitle/internal/types"
+)
+
+type MyProvider struct{}
+
+// Unique name for the provider (used in CLI/Config)
+func (p *MyProvider) Name() string {
+    return "myprovider"
+}
+
+// Detecting if a user-supplied URL belongs to this provider
+func (p *MyProvider) MatchesURL(url string) bool {
+    // A provider can support multiple domains
+    return strings.Contains(url, "myprovider.com") ||
+           strings.Contains(url, "myprovider.tv")
+}
+
+// Extract the unique ID from the URL (e.g., "12345" from "site.com/show/12345")
+func (p *MyProvider) ExtractID(url string) (string, error) {
+    // Implementation logic...
+    return "12345", nil
+}
+
+// Fetch the actual data and map it to the common Media format
+func (p *MyProvider) FetchMedia(ctx context.Context, id string) (*types.Media, error) {
+    // API calls to your provider...
+    return &types.Media{
+        Title: "Show Name",
+        Episodes: []types.Episode{...},
+    }, nil
+}
+```
+
+### 2. Register the Provider
+
+Add your new provider to the list in `internal/provider/registry.go` so autotitle knows about it:
+
+```go
+var providers = []types.Provider{
+    &MALProvider{},
+    &MyProvider{},  // <-- Add your new provider here
+}
+```
+
+## Adding a New Filler Source
+
+Process is similar to adding a provider.
+
+### 1. Implement the Interface
+
+Create `internal/provider/filler/myfiller.go`:
+
+```go
+package filler
+
+import (
+    "context"
+    "github.com/mydehq/autotitle/internal/types"
+)
+
+type MyFillerSource struct{}
+
+// Unique name for the source
+func (s *MyFillerSource) Name() string {
+    return "myfiller"
+}
+
+// Detecting if a user-supplied URL belongs to this source
+func (s *MyFillerSource) MatchesURL(url string) bool {
+    return strings.Contains(url, "myfiller.com")
+}
+
+// Fetch list of episode numbers that are fillers
+func (s *MyFillerSource) FetchFillers(ctx context.Context, slug string) ([]int, error) {
+    // API calls...
+    return []int{14, 15, 20}, nil
+}
+```
+
+### 2. Register the Filler Source
+
+Add it to `internal/provider/filler/registry.go`:
+
+```go
+var fillerSources = []types.FillerSource{
+    &AnimeFillerListSource{},
+    &MyFillerSource{},  // <-- Add your new source here
+}
+```
+
+## Database Storage
+
+Databases are stored per-provider:
+
+```
+~/.cache/autotitle/db/
+├── mal/
+│   └── 12345@attack-on-titan.json
+├── tmdb/
+│   └── 1234@breaking-bad.json
+```
