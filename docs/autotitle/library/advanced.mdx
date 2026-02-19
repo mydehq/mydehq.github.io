@@ -10,13 +10,14 @@ sidebar_position: 3
 
 The library is designed to be UI-agnostic. It does not use global loggers or print directly to `stdout`.
 
-### The Event System
-
 All major operations (`Rename`, `Init`, `DBGen`) accept the `WithEvents(handler)` option. This is the recommended way to integrate `autotitle` logging into your application's own logging system (e.g., `logrus`, `zap`, or `charmbracelet/log`).
 
 ### Implementing a Custom Handler
 
 You can set a global default handler for your application. This avoids the need to pass `WithEvents` to every function call.
+You can still override the global default by passing `WithEvents(localHandler)` to a specific function call.
+
+#### Example
 
 ```go
 // main.go
@@ -34,8 +35,12 @@ func main() {
         case autotitle.EventError:
              logger.Error(e.Message)
         case autotitle.EventProgress:
-             // e.Data might contain progress details (e.g. 50%)
-             logger.Debug(e.Message)
+             // e.Data is optional and type depends on the context
+             if p, ok := e.Data.(float64); ok {
+                 logger.Debug(fmt.Sprintf("%s (%.0f%%)", e.Message, p*100))
+             } else {
+                 logger.Debug(e.Message)
+             }
         }
     })
 
@@ -43,6 +48,10 @@ func main() {
     autotitle.Rename(ctx, path)
 }
 ```
+
+:::tip
+You can see the CLI's handler implementation in [`internal/cli/root.go`](https://github.com/mydehq/autotitle/blob/main/internal/cli/root.go#L58) for a complete example using `id/charmbracelet/log`.
+:::
 
 ### Event Types
 
@@ -53,8 +62,6 @@ func main() {
 | `EventWarning`  | Non-fatal issue (e.g. potential conflict, missing filler list) |
 | `EventError`    | Operation failed for a specific file                           |
 | `EventProgress` | Progress update (often verbose)                                |
-
-You can still override the global default by passing `WithEvents(localHandler)` to a specific function call.
 
 ### Fallback Behavior
 
