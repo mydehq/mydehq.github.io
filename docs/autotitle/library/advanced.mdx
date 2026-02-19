@@ -1,0 +1,106 @@
+---
+title: Advanced Usage
+description: Custom logging, events, and utilities
+sidebar_position: 3
+---
+
+# Advanced Usage
+
+## Logging and Progress
+
+The library is designed to be UI-agnostic. It does not use global loggers or print directly to `stdout`.
+
+### The Event System
+
+All major operations (`Rename`, `Init`, `DBGen`) accept the `WithEvents(handler)` option. This is the recommended way to integrate `autotitle` logging into your application's own logging system (e.g., `logrus`, `zap`, or `charmbracelet/log`).
+
+### Implementing a Custom Handler
+
+You can set a global default handler for your application. This avoids the need to pass `WithEvents` to every function call.
+
+```go
+// main.go
+
+func main() {
+    // Set the global default handler
+    autotitle.SetDefaultEventHandler(func(e autotitle.Event) {
+        switch e.Type {
+        case autotitle.EventInfo:
+             logger.Info(e.Message)
+        case autotitle.EventSuccess:
+             logger.Info("SUCCESS: " + e.Message)
+        case autotitle.EventWarning:
+             logger.Warn(e.Message)
+        case autotitle.EventError:
+             logger.Error(e.Message)
+        case autotitle.EventProgress:
+             // e.Data might contain progress details (e.g. 50%)
+             logger.Debug(e.Message)
+        }
+    })
+
+    // Now you can call functions without passing the handler explicitly
+    autotitle.Rename(ctx, path)
+}
+```
+
+### Event Types
+
+| Type            | Description                                                    |
+| --------------- | -------------------------------------------------------------- |
+| `EventInfo`     | General information                                            |
+| `EventSuccess`  | Operation completed successfully                               |
+| `EventWarning`  | Non-fatal issue (e.g. potential conflict, missing filler list) |
+| `EventError`    | Operation failed for a specific file                           |
+| `EventProgress` | Progress update (often verbose)                                |
+
+You can still override the global default by passing `WithEvents(localHandler)` to a specific function call.
+
+### Fallback Behavior
+
+If you do **not** provide an event handler:
+
+1.  **Info/Success/Progress** events are silently ignored.
+2.  **Warning/Error** events are printed directly to `os.Stderr` using a simple `Warning: ...` format.
+
+To maintain a consistent look and feel (especially in CLI or TUI applications), it is recommended to always provide a handler.
+
+## Utilities
+
+### Provider Utilities
+
+Helpers for working with metadata providers (MAL, AniList, etc.).
+
+```go
+// Get provider for a URL
+provider := autotitle.GetProviderForURL("https://myanimelist.net/anime/...")
+
+// Get filler source for a URL
+source := autotitle.GetFillerSourceForURL("https://www.animefillerlist.com/...")
+
+// List available providers
+providers := autotitle.ListProviders()
+
+// List available filler sources
+sources := autotitle.ListFillerSources()
+```
+
+### Pattern Utilities
+
+Helpers for working with filename patterns.
+
+```go
+// Compile a pattern for matching
+pattern, err := autotitle.CompilePattern("{{SERIES}} - {{EP_NUM}}")
+
+// Auto-detect pattern from filename
+pattern := autotitle.GuessPattern("Attack on Titan - 01.mkv")
+
+// Generate filename from fields
+filename := autotitle.GenerateFilenameFromFields(
+    []string{"SERIES", "EP_NUM", "EP_NAME"},
+    " - ",
+    vars,
+    3, // Padding width
+)
+```

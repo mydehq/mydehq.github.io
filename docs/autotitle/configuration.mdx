@@ -26,18 +26,19 @@ targets:
 
 Use `{{PLACEHOLDER}}` syntax to match parts of filenames:
 
-| Placeholder  | Matches            | Example           |
-| ------------ | ------------------ | ----------------- |
-| `{{EP_NUM}}` | Episode number     | `01`, `123`       |
-| `{{RES}}`    | Resolution         | `1080p`, `720p`   |
-| `{{SERIES}}` | Series title       | `Attack on Titan` |
-| `{{ANY}}`    | Metadata/Tags      | `[SubGroup]`, `v2`|
+| Placeholder  | Matches        | Example            |
+| ------------ | -------------- | ------------------ |
+| `{{EP_NUM}}` | Episode number | `01`, `123`        |
+| `{{RES}}`    | Resolution     | `1080p`, `720p`    |
+| `{{SERIES}}` | Series title   | `Attack on Titan`  |
+| `{{ANY}}`    | Metadata/Tags  | `[SubGroup]`, `v2` |
 
 ### Smart Matching Logic
 
 Autotitle uses **non-greedy matching** for all text-based placeholders (`{{SERIES}}`, `{{ANY}}`, `{{EP_NAME}}`). This ensures that patterns like `[{{ANY}}] {{SERIES}} - {{EP_NUM}}` correctly isolate the bracketed tag without "swallowing" parts of the series name.
 
 ### Multiple Placeholders
+
 You can use the same placeholder multiple times in a single pattern. This is especially useful for files with multiple metadata tags:
 
 ```yaml
@@ -70,10 +71,12 @@ input:
 | `RES`       | Resolution (from input) | `1080p`                 |
 
 ### Implicit Literals
+
 You can include literal strings directly in the `fields` list.
-*   **Keywords** (like `SERIES`) are replaced with data.
-*   **Quoted Strings** (like `" - "`) are used as-is.
-*   **Unknown Strings** (like `S2` or ` - `) are treated as literals automatically.
+
+- **Keywords** (like `SERIES`) are replaced with data.
+- **Quoted Strings** (like `" - "`) are used as-is.
+- **Unknown Strings** (like `S2` or `-`) are treated as literals automatically.
 
 ```yaml
 fields: ["S2", EP_NUM, " - ", EP_NAME]
@@ -81,6 +84,7 @@ fields: ["S2", EP_NUM, " - ", EP_NAME]
 ```
 
 ### Glue Operator (`+`)
+
 Use the `+` operator to join two fields without separator.
 
 ```yaml
@@ -91,6 +95,7 @@ fields: [SERIES, "+", EP_NUM]
 ## Advanced Settings
 
 ### Episode Offset
+
 Maps local episode numbers to database numbers (e.g., matching "Episode 1" of local Season 2 to "Episode 13" in the global DB list).
 
 ```yaml
@@ -99,9 +104,11 @@ output:
 ```
 
 ### Episode Padding
+
 Controls the number of digits for `EP_NUM`.
-*   **0 (Default)**: Automatically calculated based on total episodes (e.g., 24 eps -> 2 digits `01`, 150 eps -> 3 digits `001`).
-*   **Explicit**: Force a specific width.
+
+- **0 (Default)**: Automatically calculated based on total episodes (e.g., 24 eps -> 2 digits `01`, 150 eps -> 3 digits `001`).
+- **Explicit**: Force a specific width.
 
 ```yaml
 output:
@@ -109,11 +116,60 @@ output:
 ```
 
 ### Separator
+
 Sets the default separator inserted between fields.
-*   Default: ` - `
-*   Empty: `""` (Use this if you want full manual control via literals)
+
+- Default: `-`
+- Empty: `""` (Use this if you want full manual control via literals)
 
 ```yaml
 output:
   separator: "  " # Double space
+```
+
+## Global Configuration
+
+You can configure default settings for autotitle globally. This is useful for defining API timeouts, custom file extensions, or default patterns.
+
+**Locations (in order of precedence):**
+
+1. `~/.config/autotitle/config.yml` (User)
+2. `/etc/autotitle/config.yml` (System)
+
+### Structure
+
+```yaml
+# ~/.config/autotitle/config.yml
+
+# Default name for per-directory map files
+map_file: "_autotitle.yml"
+
+# File extensions to scan
+formats:
+  - mkv
+  - mp4
+  - avi
+  - webm
+  - m4v
+  - ts
+  - flv
+
+# HTTP Client settings
+api:
+  rate_limit: 2.0 # Requests per second
+  timeout: 30 # Seconds
+
+# Backup settings
+backup:
+  enabled: true
+  dir_name: ".autotitle_backup"
+
+# Default patterns (used if no patterns are detected in a directory)
+patterns:
+  - input:
+      - "{{EP_NUM}}.{{EXT}}"
+      - "Episode {{EP_NUM}}.{{EXT}}"
+    output:
+      fields: ["E", "+", "EP_NUM", "FILLER", "-", "EP_NAME"]
+      separator: " "
 ```

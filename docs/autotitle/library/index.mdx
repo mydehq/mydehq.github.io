@@ -1,0 +1,66 @@
+---
+title: Overview
+description: Getting started with the autotitle Go library
+sidebar_position: 1
+---
+
+# Go Library
+
+Autotitle can be used as a Go package for programmatic access to episode renaming functionality. It provides a clean, event-driven API for integrating renaming logic into your own applications.
+
+## Installation
+
+```bash
+go get github.com/mydehq/autotitle
+```
+
+## Quick Start
+
+Here is a complete example of how to use the library with the recommended global logging pattern.
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "os"
+    "github.com/mydehq/autotitle"
+)
+
+func main() {
+    // 1. Setup Global Logging (Once at startup)
+    autotitle.SetDefaultEventHandler(func(e autotitle.Event) {
+        fmt.Printf("[%s] %s\n", e.Type, e.Message)
+    })
+
+    ctx := context.Background()
+    path := "/path/to/anime/videos"
+
+    // 2. Initialize map file (automatically uses global logger)
+    err := autotitle.Init(ctx, path,
+        autotitle.WithURL("https://myanimelist.net/anime/16498/Attack_on_Titan"),
+        autotitle.WithFiller("https://www.animefillerlist.com/shows/attack-titan"),
+        autotitle.WithForce(),
+    )
+    if err != nil {
+        fmt.Printf("Init error: %v\n", err)
+        return
+    }
+
+    // 3. Perform rename (automatically uses global logger)
+    ops, err := autotitle.Rename(ctx, path)
+    if err != nil {
+        fmt.Printf("Rename error: %v\n", err)
+        autotitle.Undo(ctx, path)
+        return
+    }
+
+    fmt.Printf("Successfully renamed %d files\n", len(ops))
+}
+```
+
+## Next Steps
+
+- Check out the [API Reference](./api) for detailed function signatures.
+- Learn about [Advanced Logging & Utilities](./advanced) for custom integrations.

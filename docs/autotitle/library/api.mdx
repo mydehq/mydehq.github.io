@@ -1,0 +1,252 @@
+---
+title: API Reference
+description: Detailed reference for autotitle functions and types
+sidebar_position: 2
+---
+
+# API Reference
+
+## Core Functions
+
+### SetDefaultEventHandler
+
+Sets the global event handler for all operations.
+
+```go
+func SetDefaultEventHandler(h EventHandler)
+```
+
+**Example:**
+
+```go
+autotitle.SetDefaultEventHandler(func(e autotitle.Event) {
+    fmt.Printf("[%s] %s\n", e.Type, e.Message)
+})
+```
+
+:::warning Important
+**The library does not log Info or Success output by default.**  
+You **must** set an event handler (either globally with `SetDefaultEventHandler` or locally with `WithEvents`) to receive progress updates and success messages. Without a handler, only Warnings and Errors will be printed to `stderr`.
+
+See [Advanced Usage: Implementing a Custom Handler](./advanced#implementing-a-custom-handler) for details.
+:::
+
+### Init
+
+Creates a new `_autotitle.yml` map file in the specified directory.
+
+```go
+func Init(ctx context.Context, path string, opts ...Option) error
+```
+
+**Options for Init:**
+
+| Option                | Default                 | Description                                     |
+| --------------------- | ----------------------- | ----------------------------------------------- |
+| `WithURL(url)`        | `""` (Uses placeholder) | Set provider URL (e.g. MAL, AniList)            |
+| `WithFiller(url)`     | `""` (Uses placeholder) | Set filler list URL                             |
+| `WithOffset(int)`     | `0`                     | Offset episode numbers by N                     |
+| `WithPadding(int)`    | `0` (Auto)              | Pad episode numbers to N digits (e.g. 2 -> E01) |
+| `WithSeparator(str)`  | `" "`                   | Set separator between show name and ep          |
+| `WithForce()`         | `false`                 | Force overwrite existing files                  |
+| `WithEvents(handler)` | `nil`                   | Receive progress events during operation [^1]   |
+
+**Example:**
+
+```go
+err := autotitle.Init(ctx, ".",
+    autotitle.WithURL("https://myanimelist.net/anime/16498"),
+    autotitle.WithFiller("https://www.animefillerlist.com/shows/attack-titan"),
+    autotitle.WithForce(),
+)
+```
+
+### Rename
+
+Renames media files in a directory based on the map file configuration.
+
+```go
+func Rename(ctx context.Context, path string, opts ...Option) ([]RenameOperation, error)
+```
+
+**Options for Rename:**
+
+| Option                | Default | Description                                   |
+| --------------------- | ------- | --------------------------------------------- |
+| `WithDryRun()`        | `false` | Preview changes without renaming files        |
+| `WithNoBackup()`      | `false` | Skip backup creation before renaming          |
+| `WithOffset(int)`     | `nil`   | Offset episode numbers by N                   |
+| `WithEvents(handler)` | `nil`   | Receive progress events during operation [^1] |
+
+**Example:**
+
+```go
+// Preview changes (Dry Run)
+ops, err := autotitle.Rename(ctx, ".", autotitle.WithDryRun())
+
+// Execute changes
+ops, err := autotitle.Rename(ctx, ".")
+```
+
+### DBGen
+
+Generates/updates the episode database from a provider URL.
+
+```go
+func DBGen(ctx context.Context, url string, opts ...Option) (bool, error)
+```
+
+**Options for DBGen:**
+
+| Option                | Default    | Description                                    |
+| --------------------- | ---------- | ---------------------------------------------- |
+| `WithURL(url)`        | Required   | Set provider URL (e.g. MAL, AniList)           |
+| `WithFiller(url)`     | `""`       | Set filler list URL                            |
+| `WithOffset(int)`     | `0`        | Offset episode numbers by N                    |
+| `WithPadding(int)`    | `0` (Auto) | Pad episode numbers to N digits (e.g. 2 -> 01) |
+| `WithSeparator(str)`  | `" "`      | Set separator between show name and ep         |
+| `WithForce()`         | `false`    | Force overwrite existing files                 |
+| `WithEvents(handler)` | `nil`      | Receive progress events during operation [^1]  |
+
+**Example:**
+
+```go
+updated, err := autotitle.DBGen(ctx,
+    "https://myanimelist.net/anime/16498",
+    autotitle.WithForce(),
+)
+if updated {
+    fmt.Println("Database updated!")
+}
+```
+
+### Undo
+
+Restores files from the backup directory.
+
+```go
+func Undo(ctx context.Context, path string) error
+```
+
+**Example:**
+
+```go
+err := autotitle.Undo(ctx, ".")
+```
+
+### Clean / CleanAll
+
+Removes backup directories.
+
+```go
+func Clean(ctx context.Context, path string) error    // Single directory
+func CleanAll(ctx context.Context) error              // All backups globally
+```
+
+### Version
+
+Returns the autotitle version string.
+
+```go
+func Version() string
+```
+
+### DBList
+
+Lists all cached databases.
+
+```go
+func DBList(ctx context.Context, providerFilter string) ([]MediaSummary, error)
+```
+
+### DBInfo
+
+Returns information about a specific database entry.
+
+```go
+func DBInfo(ctx context.Context, prov, id string) (*Media, error)
+```
+
+### DBDelete / DBDeleteAll
+
+Removes database entries.
+
+```go
+func DBDelete(ctx context.Context, prov, id string) error
+func DBDeleteAll(ctx context.Context) error
+```
+
+### DBPath
+
+Returns the path to the database directory.
+
+```go
+func DBPath() (string, error)
+```
+
+## Types
+
+### RenameOperation
+
+Result of a rename operation.
+
+```go
+type RenameOperation struct {
+    SourcePath string          // Original file path
+    TargetPath string          // New file path
+    Episode    *Episode        // Episode data (if matched)
+    Status     OperationStatus // pending, success, skipped, failed
+    Error      string          // Error message (if failed)
+}
+```
+
+### Event
+
+Progress event emitted during operations.
+
+```go
+type Event struct {
+    Type    EventType  // info, progress, success, warning, error
+    Message string
+    Data    any        // Optional additional data
+}
+
+type EventHandler func(Event)
+```
+
+### Media & Episode
+
+Episode metadata from the database.
+
+```go
+type Media struct {
+    ID           string
+    Provider     string
+    Title        string
+    TitleEN      string    // English title
+    TitleJP      string    // Japanese title
+    Episodes     []Episode
+    FillerSource string    // Filler source name (if used)
+}
+
+type Episode struct {
+    Number   int
+    Title    string
+    IsFiller bool
+    IsMixed  bool   // Mixed canon/filler
+    AirDate  string
+}
+
+type MediaSummary struct {
+    Provider     string
+    ID           string
+    Title        string
+    EpisodeCount int
+}
+```
+
+<br />
+
+---
+
+[^1]: For most applications, prefer using `autotitle.SetDefaultEventHandler(...)` once at startup instead of passing this option to every call. See [Advanced Usage](./advanced#implementing-a-custom-handler).

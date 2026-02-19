@@ -38,8 +38,19 @@ const sidebar = {
         "autotitle/configuration",
         "autotitle/cli-reference",
         "autotitle/add-sources",
-        "autotitle/library",
-      ]
+        {
+          label: "Go Library",
+          type: "category",
+          link: {
+            type: "doc",
+            id: "autotitle/library/index",
+          },
+          items: [
+            "autotitle/library/api",
+            "autotitle/library/advanced"
+          ],
+        },
+      ],
     },
     "contributing",
     "faq",
