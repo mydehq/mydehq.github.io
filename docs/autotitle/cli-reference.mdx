@@ -8,23 +8,24 @@ sidebar_position: 5
 
 ## Main Commands
 
-| Command                 | Description                    |
-| ----------------------- | ------------------------------ |
-| `autotitle <path>`      | Rename files in directory      |
-| `autotitle init [path]` | Create `_autotitle.yml` config |
-| `autotitle undo <path>` | Restore from backup            |
-| `autotitle clean [path]`| Remove backup directory        |
-| `autotitle version`     | Print version number           |
+| Command                  | Description                               |
+| ------------------------ | ----------------------------------------- |
+| `autotitle [path]`       | Rename media files in directory           |
+| `autotitle init [path]`  | Create a new `_autotitle.yml` map file    |
+| `autotitle undo <path>`  | Restore files from backup                 |
+| `autotitle clean [path]` | Remove backup directory                   |
+| `autotitle tag [path]`   | Embed metadata into MKV files (no rename) |
+| `autotitle db`           | Database management subcommands           |
 
 ## Database Commands
 
-| Command                           | Description                    |
-| --------------------------------- | ------------------------------ |
-| `autotitle db gen <url>`          | Generate episode database      |
-| `autotitle db path`               | Show database directory        |
-| `autotitle db list`               | List all cached databases      |
-| `autotitle db info <provider> <id>` | Show database info           |
-| `autotitle db rm <provider> <id>` | Remove specific database       |
+| Command                             | Description               |
+| ----------------------------------- | ------------------------- |
+| `autotitle db gen <url>`            | Generate episode database |
+| `autotitle db path`                 | Show database directory   |
+| `autotitle db list`                 | List all cached databases |
+| `autotitle db info <provider> <id>` | Show database info        |
+| `autotitle db rm <provider> <id>`   | Remove specific database  |
 
 ## Flags by Command
 
@@ -39,42 +40,60 @@ sidebar_position: 5
 | `--force`     | `-f`  | Force database refresh           |
 | `--verbose`   | `-v`  | Verbose output                   |
 | `--quiet`     | `-q`  | Suppress output except errors    |
+| `--no-tag`    | `-T`  | Disable MKV metadata tagging     |
 
 ### `autotitle init [path]`
 
-| Flag          | Short | Description                        |
-| ------------- | ----- | ---------------------------------- |
-| `--url`       | `-u`  | Provider URL (MAL, TMDB, etc)      |
-| `--filler`    | `-F`  | Filler list URL                    |
-| `--offset`    | `-o`  | Set default offset in config       |
-| `--padding`   | `-p`  | Set episode padding (e.g. 2, 3)    |
-| `--separator` | `-S`  | Set field separator                |
-| `--force`     | `-f`  | Overwrite existing config          |
+| Flag          | Short | Description                     |
+| ------------- | ----- | ------------------------------- |
+| `--url`       | `-u`  | Provider URL (MAL, TMDB, etc)   |
+| `--filler`    | `-F`  | Filler list URL                 |
+| `--offset`    | `-o`  | Set default offset in config    |
+| `--padding`   | `-p`  | Set episode padding (e.g. 2, 3) |
+| `--separator` | `-S`  | Set field separator             |
+| `--force`     | `-f`  | Overwrite existing config       |
 
 ### `autotitle db gen <url>`
 
-| Flag       | Short | Description               |
-| ---------- | ----- | ------------------------- |
-| `--filler` | `-F`  | Filler list URL           |
+| Flag       | Short | Description                 |
+| ---------- | ----- | --------------------------- |
+| `--filler` | `-F`  | Filler list URL             |
 | `--force`  | `-f`  | Overwrite existing database |
 
 ### `autotitle db list`
 
-| Flag         | Short | Description                          |
-| ------------ | ----- | ------------------------------------ |
-| `--provider` | `-p`  | Filter by provider (mal, tmdb, etc)  |
+| Flag         | Short | Description                         |
+| ------------ | ----- | ----------------------------------- |
+| `--provider` | `-p`  | Filter by provider (mal, tmdb, etc) |
 
 ### `autotitle db rm`
 
-| Flag    | Short | Description           |
-| ------- | ----- | --------------------- |
-| `--all` | `-a`  | Remove all databases  |
+| Flag    | Short | Description          |
+| ------- | ----- | -------------------- |
+| `--all` | `-a`  | Remove all databases |
 
 ### `autotitle clean [path]`
 
-| Flag       | Short | Description                  |
-| ---------- | ----- | ---------------------------- |
-| `--global` | `-g`  | Remove all backups globally  |
+| Flag       | Short | Description                 |
+| ---------- | ----- | --------------------------- |
+| `--global` | `-g`  | Remove all backups globally |
+
+### `autotitle tag [path]`
+
+Embeds metadata into media files without renaming. Dispatches by extension:
+
+| Format               | Tool required              |
+| -------------------- | -------------------------- |
+| `.mkv`               | `mkvpropedit` (MKVToolNix) |
+| `.mp4` `.m4v` `.m4a` | `atomicparsley`            |
+| other                | skipped silently           |
+
+Tagging is **on by default** when either tool is installed. Disable per-run with `--no-tag`,
+or globally with `tagging.enabled: false` in the global config.
+
+:::tip
+Use `autotitle tag .` to tag files that are already correctly named — for example, after running autotitle on a new machine.
+:::
 
 ## Examples
 

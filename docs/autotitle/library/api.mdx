@@ -184,6 +184,39 @@ Returns the path to the database directory.
 func DBPath() (string, error)
 ```
 
+### WithNoTagging
+
+Disables metadata tagging for a specific operation, even if `mkvpropedit` or `atomicparsley` is available.
+
+```go
+func WithNoTagging() Option
+```
+
+**Example:**
+
+```go
+// Skip tagging for this one call
+ops, err := autotitle.Rename(ctx, ".", autotitle.WithNoTagging())
+```
+
+### Tag
+
+Embeds metadata into already-renamed files in a directory without renaming them.
+Dispatches by extension: `.mkv` → `mkvpropedit`, `.mp4`/`.m4v`/`.m4a` → `atomicparsley`.
+Other formats are silently skipped.
+
+```go
+func Tag(ctx context.Context, path string, opts ...Option) error
+```
+
+**Example:**
+
+```go
+err := autotitle.Tag(ctx, ".")
+```
+
+---
+
 ## Types
 
 ### RenameOperation

@@ -164,6 +164,12 @@ backup:
   enabled: true
   dir_name: ".autotitle_backup"
 
+# Metadata tagging
+# If unset, tagging is ON when mkvpropedit (MKV) or atomicparsley (MP4/M4V) is installed.
+# Set to false to disable globally.
+tagging:
+  enabled: true # or false to always disable
+
 # Default patterns (used if no patterns are detected in a directory)
 patterns:
   - input:
