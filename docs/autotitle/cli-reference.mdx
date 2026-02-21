@@ -8,14 +8,15 @@ sidebar_position: 5
 
 ## Main Commands
 
-| Command                  | Description                                |
-| ------------------------ | ------------------------------------------ |
-| `autotitle [path]`       | Rename media files in directory            |
-| `autotitle init [path]`  | Create a new `_autotitle.yml` map file     |
-| `autotitle undo <path>`  | Restore files from backup                  |
-| `autotitle clean [path]` | Remove backup directory                    |
-| `autotitle tag [path]`   | Embed metadata into MKV files (no rename)  |
-| `autotitle db`           | Database management subcommands            |
+| Command                          | Description                               |
+| -------------------------------- | ----------------------------------------- |
+| `autotitle [path]`               | Rename media files in directory           |
+| `autotitle init [path]`          | Create a new `_autotitle.yml` map file    |
+| `autotitle guess-pattern [path]` | Preview detected patterns in directory    |
+| `autotitle undo <path>`          | Restore files from backup                 |
+| `autotitle clean [path]`         | Remove backup directory                   |
+| `autotitle tag [path]`           | Embed metadata into MKV files (no rename) |
+| `autotitle db`                   | Database management subcommands           |
 
 ## Database Commands
 
@@ -24,8 +25,8 @@ sidebar_position: 5
 | `autotitle db gen <url>`            | Generate episode database |
 | `autotitle db path`                 | Show database directory   |
 | `autotitle db list`                 | List all cached databases |
-| `autotitle db info <provider> <id>` | Show database info        |
-| `autotitle db rm <provider> <id>`   | Remove specific database  |
+| `autotitle db info <provider>/<id>` | Show database info        |
+| `autotitle db rm <provider>/<id>`   | Remove specific database  |
 
 ## Flags by Command
 
@@ -114,7 +115,10 @@ autotitle db gen "https://myanimelist.net/anime/12345" -F "https://animefillerli
 autotitle db list -p mal
 
 # Show database info
-autotitle db info mal 12345
+autotitle db info mal/12345
+
+# Remove specific database
+autotitle db rm mal/12345
 
 # Remove all databases
 autotitle db rm -a

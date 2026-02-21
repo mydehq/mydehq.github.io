@@ -61,6 +61,35 @@ err := autotitle.Init(ctx, ".",
 )
 ```
 
+
+### Search
+
+Queries all active providers (or a specific provider) for media matching the query string. Useful for interactive applications where users shouldn't have to provide an exact URL.
+
+```go
+func Search(ctx context.Context, query string, opts ...Option) ([]SearchResult, error)
+```
+
+**Options for Search:**
+
+| Option              | Default | Description                                       |
+| ------------------- | ------- | ------------------------------------------------- |
+| `WithProvider(str)` | `""`    | Restrict search to a specific provider (e.g. mal) |
+
+**Example:**
+
+```go
+// Search all registered providers
+results, err := autotitle.Search(ctx, "detective conan")
+
+// Search only MyAnimeList
+malResults, err := autotitle.Search(ctx, "detective conan", autotitle.WithProvider("mal"))
+
+for _, r := range malResults {
+    fmt.Printf("%s (%d) - %s\n", r.Title, r.Year, r.URL)
+}
+```
+
 ### Rename
 
 Renames media files in a directory based on the map file configuration.
