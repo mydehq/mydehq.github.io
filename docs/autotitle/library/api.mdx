@@ -76,6 +76,7 @@ func Rename(ctx context.Context, path string, opts ...Option) ([]RenameOperation
 | `WithDryRun()`        | `false` | Preview changes without renaming files        |
 | `WithNoBackup()`      | `false` | Skip backup creation before renaming          |
 | `WithOffset(int)`     | `nil`   | Offset episode numbers by N                   |
+| `WithNoTagging()`     | `false` | Disables metadata tagging for this operation  |
 | `WithEvents(handler)` | `nil`   | Receive progress events during operation [^1] |
 
 **Example:**
@@ -122,7 +123,7 @@ if updated {
 
 ### Undo
 
-Restores files from the backup directory.
+Restores previously renamed media files in a directory back to their original filenames using the data stored in the local backup directory.
 
 ```go
 func Undo(ctx context.Context, path string) error
@@ -134,18 +135,27 @@ func Undo(ctx context.Context, path string) error
 err := autotitle.Undo(ctx, ".")
 ```
 
-### Clean / CleanAll
+### Clean
 
-Removes backup directories.
+Permanently deletes the backup history used by `Undo` for a specific target directory.
 
 ```go
-func Clean(ctx context.Context, path string) error    // Single directory
-func CleanAll(ctx context.Context) error              // All backups globally
+func Clean(ctx context.Context, path string) error
+```
+
+<br/>
+
+### CleanAll
+
+Purges the global backup cache entirely across all directories.
+
+```go
+func CleanAll(ctx context.Context) error
 ```
 
 ### Version
 
-Returns the autotitle version string.
+Returns the current semver version string of the `autotitle` library (e.g., `v1.2.0`).
 
 ```go
 func Version() string
@@ -153,7 +163,7 @@ func Version() string
 
 ### DBList
 
-Lists all cached databases.
+Retrieves a simplified list of all locally cached media databases. You can optionally filter the results by providing a `providerFilter` string (e.g. `"mal"` or `"tmdb"`).
 
 ```go
 func DBList(ctx context.Context, providerFilter string) ([]MediaSummary, error)
@@ -161,42 +171,105 @@ func DBList(ctx context.Context, providerFilter string) ([]MediaSummary, error)
 
 ### DBInfo
 
-Returns information about a specific database entry.
+Fetches detailed metadata and episode data for a specific media entry stored in the local cache. Requires both the provider name and the provider's unique media ID.
 
 ```go
 func DBInfo(ctx context.Context, prov, id string) (*Media, error)
 ```
 
-### DBDelete / DBDeleteAll
+### DBDelete
 
-Removes database entries.
+Removes media data from the local cache for a single specific entry using its provider and ID.
 
 ```go
 func DBDelete(ctx context.Context, prov, id string) error
+```
+
+### DBDeleteAll
+
+Clears the entire autotitle media cache across all providers.
+
+```go
 func DBDeleteAll(ctx context.Context) error
 ```
 
 ### DBPath
 
-Returns the path to the database directory.
+Returns the absolute filesystem path pointing to where the autotitle database cache directory is stored on the host machine.
 
 ```go
 func DBPath() (string, error)
 ```
 
-### WithNoTagging
+### ListProviders
 
-Disables metadata tagging for a specific operation, even if `mkvpropedit` or `atomicparsley` is available.
+Returns the names of all registered providers.
 
 ```go
-func WithNoTagging() Option
+func ListProviders() []string
 ```
 
 **Example:**
 
 ```go
-// Skip tagging for this one call
-ops, err := autotitle.Rename(ctx, ".", autotitle.WithNoTagging())
+providers := autotitle.ListProviders()
+fmt.Println("Available providers:", providers)
+```
+
+### ListFillerSources
+
+Returns the names of all globally registered filler sources (e.g., `"animefillerlist"`). This is particularly useful if you need to display available filler sources in a UI or validate user input.
+
+```go
+func ListFillerSources() []string
+```
+
+### GetProvider
+
+Fetches a specific provider instance (like `mal` or `tmdb`) by its registered string name. If the provider doesn't exist, it returns an `ErrProviderNotFound`.
+
+```go
+func GetProvider(name string) (Provider, error)
+```
+
+### GetProviderForURL
+
+Analyzes a given URL and returns the appropriate `Provider` instance that is capable of handling it (by matching URL domain patterns). Returns an error if no registered provider supports the URL.
+
+```go
+func GetProviderForURL(url string) (Provider, error)
+```
+
+### GetFillerSourceForURL
+
+Analyzes a given URL and returns the appropriate `FillerSource` instance that is capable of parsing it. Returns an error if no registered filler source supports the URL.
+
+```go
+func GetFillerSourceForURL(url string) (FillerSource, error)
+```
+
+### CompilePattern
+
+Compiles a raw string pattern (e.g., `"{title} - {ep}"`) into a highly optimized `Pattern` object used internally by the `autotitle` matcher. Returns an error if the pattern syntax is invalid.
+
+```go
+func CompilePattern(pattern string) (*Pattern, error)
+```
+
+### GuessPattern
+
+Analyzes a raw media filename (like `"[Subs] Show Name - 01.mkv"`) and attempts to programmatically guess the correct `Pattern` object that matches its structure. Very useful for auto-detecting formats in unknown directories.
+
+```go
+func GuessPattern(filename string) (*Pattern, error)
+```
+
+### GenerateFilenameFromFields
+
+Creates a clean, formatted filename string by combining a compiled `Pattern` with a map of `TemplateVars` data (like Season, Episode Number, Title, etc.).
+
+```go
+func GenerateFilenameFromFields(p *Pattern, vars TemplateVars) (string, error)
 ```
 
 ### Tag
@@ -209,10 +282,17 @@ Other formats are silently skipped.
 func Tag(ctx context.Context, path string, opts ...Option) error
 ```
 
+**Options for Tag:**
+
+| Option                | Default | Description                                   |
+| --------------------- | ------- | --------------------------------------------- |
+| `WithNoTagging()`     | `false` | Skips actual tagging (makes this a no-op)     |
+| `WithEvents(handler)` | `nil`   | Receive progress events during operation [^1] |
+
 **Example:**
 
 ```go
-err := autotitle.Tag(ctx, ".")
+err := autotitle.Tag(ctx, ".", autotitle.WithNoTagging())
 ```
 
 ---
@@ -228,8 +308,38 @@ type RenameOperation struct {
     SourcePath string          // Original file path
     TargetPath string          // New file path
     Episode    *Episode        // Episode data (if matched)
+    Series     string          // Series title (populated after match)
     Status     OperationStatus // pending, success, skipped, failed
     Error      string          // Error message (if failed)
+}
+```
+
+### OperationStatus
+
+Enum for the status of a rename operation.
+
+```go
+type OperationStatus string
+
+const (
+    StatusPending OperationStatus = "pending"
+    StatusSuccess OperationStatus = "success"
+    StatusSkipped OperationStatus = "skipped"
+    StatusFailed  OperationStatus = "failed"
+)
+```
+
+### SearchResult
+
+A normalized search response from a provider.
+
+```go
+type SearchResult struct {
+    Provider string // e.g., "mal", "tmdb"
+    ID       string // Provider-specific ID
+    Title    string // Media title
+    Year     int    // Release year
+    URL      string // Provider URL for this media
 }
 ```
 
@@ -239,42 +349,181 @@ Progress event emitted during operations.
 
 ```go
 type Event struct {
-    Type    EventType  // info, progress, success, warning, error
+    Type    EventType // info, progress, success, warning, error
     Message string
-    Data    any        // Optional additional data
+    Data    any       // Optional additional data
 }
 
 type EventHandler func(Event)
 ```
 
-### Media & Episode
+### EventType
+
+Enum for the type of progress event.
+
+```go
+type EventType string
+
+const (
+    EventInfo     EventType = "info"
+    EventProgress EventType = "progress"
+    EventSuccess  EventType = "success"
+    EventWarning  EventType = "warning"
+    EventError    EventType = "error"
+)
+```
+
+### Media
+
+Unified metadata type for all content.
+
+```go
+type Media struct {
+    ID                 string
+    Provider           string
+    Title              string
+    TitleEN            string    // English title
+    TitleJP            string    // Japanese title
+    Slug               string    // Series slug (e.g. for filler sources)
+    Aliases            []string  // Alternative titles
+    Type               MediaType // anime, movie, tvshow
+    Status             string    // Airing status (e.g. "Currently Airing")
+    NextEpisodeAirDate *string   // ISO date string
+    EpisodeCount       int       // Total episodes (if known)
+    FillerSource       string    // Filler source name (if used)
+    LastUpdate         time.Time // Last fetch timestamp
+    Episodes           []Episode
+}
+```
+
+### MediaType
+
+```go
+type MediaType string
+
+const (
+    MediaTypeAnime  MediaType = "anime"
+    MediaTypeMovie  MediaType = "movie"
+    MediaTypeTVShow MediaType = "tvshow"
+)
+```
+
+### Episode
 
 Episode metadata from the database.
 
 ```go
-type Media struct {
-    ID           string
-    Provider     string
-    Title        string
-    TitleEN      string    // English title
-    TitleJP      string    // Japanese title
-    Episodes     []Episode
-    FillerSource string    // Filler source name (if used)
-}
-
 type Episode struct {
     Number   int
     Title    string
     IsFiller bool
     IsMixed  bool   // Mixed canon/filler
-    AirDate  string
+    AirDate  string // ISO date string
 }
+```
 
+### MediaSummary
+
+Lightweight summary for database listings.
+
+```go
 type MediaSummary struct {
     Provider     string
     ID           string
     Title        string
     EpisodeCount int
+}
+```
+
+### BackupRecord
+
+Global tracking for a backup directory.
+
+```go
+type BackupRecord struct {
+    Path      string
+    SourceDir string
+    Timestamp time.Time
+}
+```
+
+### Core Interfaces (Advanced)
+
+These interfaces define the internal behavior of autotitle components and can be implemented for custom providers or repositories.
+
+#### Provider
+
+Core abstraction for data sources.
+
+```go
+type Provider interface {
+    Name() string
+    Type() MediaType
+    MatchesURL(url string) bool
+    ExtractID(url string) (string, error)
+    FetchMedia(ctx context.Context, id string) (*Media, error)
+    Search(ctx context.Context, query string) ([]SearchResult, error)
+}
+```
+
+#### FillerSource
+
+Source for filler episode data.
+
+```go
+type FillerSource interface {
+    Name() string
+    MatchesURL(url string) bool
+    ExtractSlug(url string) (string, error)
+    FetchFillers(ctx context.Context, slug string) ([]int, error)
+}
+```
+
+### Configuration Structures
+
+These structures represent the schema of `_autotitle.yml` and the global `config.yml`.
+
+#### Config
+
+The local map file (`_autotitle.yml`).
+
+```go
+type Config struct {
+    Targets []Target
+}
+
+type Target struct {
+    Path      string
+    URL       string    // Provider URL
+    FillerURL string    // Optional filler source URL
+    Patterns  []Pattern
+}
+
+type Pattern struct {
+    Input  []string
+    Output OutputConfig
+}
+
+type OutputConfig struct {
+    Fields    []string
+    Separator string
+    Offset    int
+    Padding   int
+}
+```
+
+#### GlobalConfig
+
+The global settings file (`~/.config/autotitle/config.yml`).
+
+```go
+type GlobalConfig struct {
+    MapFile  string
+    Patterns []Pattern
+    Formats  []string
+    API      APIConfig
+    Backup   BackupConfig
+    Tagging  TaggingConfig
 }
 ```
 

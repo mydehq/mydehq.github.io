@@ -17,6 +17,8 @@ All major operations (`Rename`, `Init`, `DBGen`) accept the `WithEvents(handler)
 You can set a global default handler for your application. This avoids the need to pass `WithEvents` to every function call.
 You can still override the global default by passing `WithEvents(localHandler)` to a specific function call.
 
+See the [API Reference: EventType](./api#eventtype) for a full list of event types and their meanings.
+
 #### Example
 
 ```go
@@ -26,21 +28,21 @@ func main() {
     // Set the global default handler
     autotitle.SetDefaultEventHandler(func(e autotitle.Event) {
         switch e.Type {
-        case autotitle.EventInfo:
-             logger.Info(e.Message)
-        case autotitle.EventSuccess:
-             logger.Info("SUCCESS: " + e.Message)
-        case autotitle.EventWarning:
-             logger.Warn(e.Message)
-        case autotitle.EventError:
-             logger.Error(e.Message)
-        case autotitle.EventProgress:
-             // e.Data is optional and type depends on the context
-             if p, ok := e.Data.(float64); ok {
-                 logger.Debug(fmt.Sprintf("%s (%.0f%%)", e.Message, p*100))
-             } else {
-                 logger.Debug(e.Message)
-             }
+            case autotitle.EventInfo:
+                 logger.Info(e.Message)
+            case autotitle.EventSuccess:
+                 logger.Info("SUCCESS: " + e.Message)
+            case autotitle.EventWarning:
+                 logger.Warn(e.Message)
+            case autotitle.EventError:
+                 logger.Error(e.Message)
+            case autotitle.EventProgress:
+                 // e.Data is optional and type depends on the context
+                 if p, ok := e.Data.(float64); ok {
+                     logger.Debug(fmt.Sprintf("%s (%.0f%%)", e.Message, p*100))
+                 } else {
+                     logger.Debug(e.Message)
+                 }
         }
     })
 
@@ -50,18 +52,9 @@ func main() {
 ```
 
 :::tip
-You can see the CLI's handler implementation in [`internal/cli/root.go`](https://github.com/mydehq/autotitle/blob/main/internal/cli/root.go#L58) for a complete example using `id/charmbracelet/log`.
+You can see the CLI's handler implementation in [`internal/cli/root.go`](https://github.com/mydehq/autotitle/blob/main/internal/cli/root.go#L60) for a complete example using `id/charmbracelet/log`.
 :::
 
-### Event Types
-
-| Type            | Description                                                    |
-| --------------- | -------------------------------------------------------------- |
-| `EventInfo`     | General information                                            |
-| `EventSuccess`  | Operation completed successfully                               |
-| `EventWarning`  | Non-fatal issue (e.g. potential conflict, missing filler list) |
-| `EventError`    | Operation failed for a specific file                           |
-| `EventProgress` | Progress update (often verbose)                                |
 
 ### Fallback Behavior
 
@@ -103,11 +96,11 @@ pattern, err := autotitle.CompilePattern("{{SERIES}} - {{EP_NUM}}")
 // Auto-detect pattern from filename
 pattern := autotitle.GuessPattern("Attack on Titan - 01.mkv")
 
-// Generate filename from fields
-filename := autotitle.GenerateFilenameFromFields(
-    []string{"SERIES", "EP_NUM", "EP_NAME"},
-    " - ",
-    vars,
-    3, // Padding width
-)
+// Generate filename from fields using a compiled pattern
+vars := autotitle.TemplateVars{
+    "SERIES": "Attack on Titan",
+    "EP_NUM": "01",
+    "EP_NAME": "To You, 2000 Years Later",
+}
+filename, err := autotitle.GenerateFilenameFromFields(pattern, vars)
 ```
